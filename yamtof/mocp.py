@@ -27,7 +27,9 @@ class MOCP_Trajectory:
         assert is_valid_name(trajectory_name)
         assert isinstance(n_intervals, int)
         assert n_intervals >= 1
-        if not isinstance(initialization_value, float): initialization_value = 0.0
+        if isinstance(initialization_value, casadi.DM):
+            initialization_value = float(initialization_value)
+        assert isinstance(initialization_value, float)
 
         self.trajectory_interior = casadi.SX.sym('T/' + phase_name + '/' + trajectory_name)
         self.start               = casadi.SX.sym('S/' + phase_name + '/' + trajectory_name)
@@ -295,12 +297,14 @@ class MultiPhaseOptimalControlProblem:
             caller_info = inspect.getouterframes(inspect.currentframe())[1]
             kwargs['name'] = make_name_from_caller_info(caller_info)
         self._add_constraint_impl(constraint_expr, kwargs['name'], False)
+        return kwargs['name']
 
     def add_path_constraint(self, constraint_expr, **kwargs):
         if not 'name' in kwargs:
             caller_info = inspect.getouterframes(inspect.currentframe())[1]
             kwargs['name'] = make_name_from_caller_info(caller_info)
         self._add_constraint_impl(constraint_expr, kwargs['name'], True)
+        return kwargs['name']
 
     def add_objective(self, f, **kwargs):
         if not 'name' in kwargs:
@@ -310,6 +314,11 @@ class MultiPhaseOptimalControlProblem:
         assert not has_trajectory_variable(variables), 'Error: Simple objectives may not contain a trajectory variable. Use an integral objective.'
         assert not kwargs['name'] in self.objectives, 'Duplicate name'
         self.objectives[kwargs['name']] = f
+        return kwargs['name']
+
+    def remove_objective(self, objective_name):
+        assert objective_name in self.objectives
+        del self.objectives[objective_name]
 
     def add_integral_objective(self, f, **kwargs):
         if not 'name' in kwargs:
@@ -321,6 +330,7 @@ class MultiPhaseOptimalControlProblem:
         assert len(phase_names) == 1, 'Error: Integral objectives must apply to one and only one phase.'
         assert not kwargs['name'] in self.phases[phase_names[0]].mean_objectives, 'Duplicate name'
         self.phases[phase_names[0]].mean_objectives[kwargs['name']] = (self.phases[phase_names[0]].duration_symbol * f)
+        return kwargs['name']
 
     def add_mean_objective(self, f, **kwargs):
         if not 'name' in kwargs:
@@ -332,6 +342,7 @@ class MultiPhaseOptimalControlProblem:
         assert len(phase_names) == 1, 'Error: Mean objectives must apply to one and only one phase.'
         assert not kwargs['name'] in self.phases[phase_names[0]].mean_objectives, 'Duplicate name'
         self.phases[phase_names[0]].mean_objectives[kwargs['name']] = f
+        return kwargs['name']
 
     # Convenience function to transcribe and solve the problem with a default approach and configuration.
     def solve(self, **kwargs):
@@ -340,6 +351,12 @@ class MultiPhaseOptimalControlProblem:
         transcriber = mocp_transcriber.MocpTranscriber(self)
         x_symbol, x_value = transcriber.pack_variables()
         p_symbol, p_value = transcriber.pack_parameters()
+
+        # Check initialization infeasibility
+        #fgh_value = transcriber.nlp_fn_fhg.call({'x':x_value,'p':p_value})
+        #index_of_large_h_infeasibility = [e[0] for e in enumerate(casadi.vertsplit(casadi.fabs(fgh_value['h']))) if float(e[1]) > 1e-2]
+        #transcriber.nlp_h[index_of_large_h_infeasibility]
+
         solver = mocp_nlp_solver.MocpNlpSolver(transcriber)
         result = solver.solver_loop(x_value, p_value, **kwargs)
         x_value = result[-1]['result']['x']
