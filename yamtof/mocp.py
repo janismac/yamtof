@@ -78,16 +78,38 @@ class MOCP_Phase:
             self.trajectories[trajectory_name].values = [float(f) for f in casadi.vertsplit(M @ self.trajectories[trajectory_name].values)]
         self.n_intervals = n_intervals_new
 
-    def interpolate(self, tau_evaluation_points):
-        M = make_phase_interpolation_matrix(self.n_intervals, tau_evaluation_points)
+    def interpolate(self, *args): # One optional argument: tau_grid
+        do_fast_interpolation = len(args) == 0
 
         result = dict()
         result['duration'] = self.duration_value
         result['trajectories'] = dict()
         result['outputs'] = dict()
 
-        for trajectory_name in self.trajectories:
-            result['trajectories'][trajectory_name] = [float(f) for f in casadi.vertsplit(M @ self.trajectories[trajectory_name].values)]
+        if do_fast_interpolation:
+            assert collocation.interpolation_nodes[0] == 0.0
+            assert collocation.interpolation_nodes[-1] == 1.0
+            result['tau_grid'] = [0.0]+[(i+e)/self.n_intervals for i in range(self.n_intervals) for e in collocation.interpolation_nodes[1:]]
+            M_closed = casadi.DM(collocation.interpolation_matrix)
+            M_open = casadi.DM(collocation.interpolation_matrix[1:])
+
+            for trajectory_name in self.trajectories:
+                interpolated_interval_values = list()
+                for i in range(self.n_intervals):
+                    interval_slice = [i * (collocation.n_nodes-1) + k for k in range(collocation.n_nodes)]
+                    interval_node_values = [self.trajectories[trajectory_name].values[j] for j in interval_slice]
+                    if i == 0:
+                        interpolated_interval_values.append(M_closed @ casadi.DM(interval_node_values))
+                    else:
+                        interpolated_interval_values.append(M_open @ casadi.DM(interval_node_values))
+
+                result['trajectories'][trajectory_name] = [float(e) for e in casadi.vertsplit(casadi.vertcat(*interpolated_interval_values))]
+        else:
+            tau_grid = args[0]
+            result['tau_grid'] = [float(e) for e in casadi.vertsplit(tau_grid)]
+            M = make_phase_interpolation_matrix(self.n_intervals, tau_grid)
+            for trajectory_name in self.trajectories:
+                result['trajectories'][trajectory_name] = [float(f) for f in casadi.vertsplit(M @ self.trajectories[trajectory_name].values)]
 
         pairs = self.parent_mocp.get_symbol_value_pairs()
         pairs = list(zip(*pairs))
@@ -101,7 +123,7 @@ class MOCP_Phase:
             [non_path_symbols, trajectroy_interiors],
             list(self.outputs.values()),
             ['non_path_symbols','trajectroy_interiors'],
-            list(self.outputs.keys())).map(tau_evaluation_points.size1())
+            list(self.outputs.keys())).map(len(result['tau_grid']))
 
         output_values = outputs_fn.call({'non_path_symbols':non_path_values, 'trajectroy_interiors':casadi.DM([e for e in result['trajectories'].values()])})
         for output_name in output_values:
@@ -450,7 +472,6 @@ def make_phase_nodes(n_intervals):
     return nodes
 
 def make_phase_interpolation_matrix(n_intervals, tau_evaluation_points):
-    # TODO cache input-output pairs, avoid re-calculating
 
     if isinstance(tau_evaluation_points, list):
         tau_evaluation_points = casadi.DM(tau_evaluation_points)

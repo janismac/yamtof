@@ -322,17 +322,16 @@ def solve_RTLS_launch_problem():
     print('max_slack', max_slack, str([e[0] for e in slack_values if max_slack*0.99 < e[1]]))
 
     # Interpolate resulting tajectory
-    tau_grid = casadi.linspace(0.0,1.0,501)
     interpolated_results = dict()
     for phase_name in mocp.phases:
-        interpolated_results[phase_name] = mocp.phases[phase_name].interpolate(tau_grid)
+        interpolated_results[phase_name] = mocp.phases[phase_name].interpolate()
         interpolated_results[phase_name]['start_time'] = 0.0
 
     for pair in consecutive_phases: # Fix phase start times
         interpolated_results[pair[1].phase_name]['start_time'] = interpolated_results[pair[0].phase_name]['start_time'] + interpolated_results[pair[0].phase_name]['duration']
 
     for phase_name in mocp.phases: # Add time grid
-        t_gird = interpolated_results[phase_name]['start_time'] + (interpolated_results[phase_name]['duration'] * tau_grid)
+        t_gird = interpolated_results[phase_name]['start_time'] + (interpolated_results[phase_name]['duration'] * DM(interpolated_results[phase_name]['tau_grid']))
         interpolated_results[phase_name]['t'] = [float(f) for f in casadi.vertsplit(t_gird)]
 
     import json
