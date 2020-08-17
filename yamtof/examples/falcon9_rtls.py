@@ -254,29 +254,24 @@ def solve_RTLS_launch_problem():
     orbit_velocity_guess = orbit_speed_guess * (-0.22 * up_direction + 0.97 * launch_direction_guess)
     boostback_velocity_guess = boostback_speed_guess * (0.65 * up_direction - 0.75 * launch_direction_guess)
 
-    entry_end_velocity = casadi.vertcat(end(phase_entry.vx), end(phase_entry.vy), end(phase_entry.vz))
-    objective_entry_speed_target = mocp.add_objective(0.1 * casadi.sumsqr(entry_end_velocity))
+    objective_entry_speed_target = mocp.add_objective(0.1 * casadi.sumsqr(end(phase_entry.v_vec)))
 
-    landing_end_velocity = casadi.vertcat(end(phase_landing.vx), end(phase_landing.vy), end(phase_landing.vz))
-    objective_landing_speed_target = mocp.add_objective(10.0 * casadi.sumsqr(landing_end_velocity))
+    objective_landing_speed_target = mocp.add_objective(10.0 * casadi.sumsqr(end(phase_landing.v_vec)))
 
-    landing_end_position = casadi.vertcat(end(phase_landing.rx), end(phase_landing.ry), end(phase_landing.rz))
-    objective_landing_position = mocp.add_objective(1000.0 * casadi.sumsqr(landing_end_position - landing_site))
+    objective_landing_position = mocp.add_objective(1000.0 * casadi.sumsqr(end(phase_landing.r_vec) - landing_site))
 
-    vacuum_coast_end_position = casadi.vertcat(end(phase_coast_vacuum.rx), end(phase_coast_vacuum.ry), end(phase_coast_vacuum.rz))
     objective_vacuum_coast_position_target = \
-        mocp.add_objective(100.0 * casadi.sumsqr(vacuum_coast_end_position - (1+p.scale_height*8) * landing_site))
+        mocp.add_objective(100.0 * casadi.sumsqr(end(phase_coast_vacuum.r_vec) - (1+p.scale_height*8) * landing_site))
 
-    boostback_end_velocity = casadi.vertcat(end(phase_boostback.vx), end(phase_boostback.vy), end(phase_boostback.vz))
     objective_boostback_velocity = \
-        mocp.add_objective(10.0 * casadi.sumsqr(boostback_end_velocity - boostback_velocity_guess))
+        mocp.add_objective(10.0 * casadi.sumsqr(end(phase_boostback.v_vec) - boostback_velocity_guess))
 
 
-    insertion_end_velocity = casadi.vertcat(end(phase_insertion.vx), end(phase_insertion.vy), end(phase_insertion.vz))
+    insertion_end_velocity = end(phase_insertion.v_vec)
     objective_insertion_velocity_target = \
         mocp.add_objective(100.0 * casadi.sumsqr(insertion_end_velocity - orbit_velocity_guess))
 
-    ascent_end_velocity = casadi.vertcat(end(phase_ascent.vx), end(phase_ascent.vy), end(phase_ascent.vz))
+    ascent_end_velocity = end(phase_ascent.v_vec)
     objective_ascent_velocity_target = \
         mocp.add_objective(1000.0 * casadi.sumsqr(ascent_end_velocity - separation_velocity_guess))
 
