@@ -269,16 +269,34 @@ class MultiPhaseOptimalControlProblem:
 
     def _get_boundary(self, sx_trajectory, boundary_name):
         assert isinstance(sx_trajectory, casadi.SX)
-        assert sx_trajectory.is_leaf()
-        assert sx_trajectory.numel() == 1
-        var_name = parse_variable_name(sx_trajectory.name())
-        assert var_name.flag == 'T'
-        if boundary_name == 'start':
-            result = self.phases[var_name.phase].trajectories[var_name.name].start
+
+        if sx_trajectory.numel() > 1:
+            result = casadi.SX.zeros(sx_trajectory.size1(),sx_trajectory.size2())
+            for i in range(sx_trajectory.size1()):
+                for j in range(sx_trajectory.size2()):
+                    result[i,j] =  self._get_boundary(sx_trajectory[i,j], boundary_name)
+            return result
         else:
-            result = self.phases[var_name.phase].trajectories[var_name.name].end
-        assert isinstance(result, casadi.SX)
-        return result
+            if sx_trajectory.is_leaf():
+                assert sx_trajectory.is_symbolic()
+                var_name = parse_variable_name(sx_trajectory.name())
+                assert var_name.flag == 'T'
+                if boundary_name == 'start':
+                    result = self.phases[var_name.phase].trajectories[var_name.name].start
+                else:
+                    result = self.phases[var_name.phase].trajectories[var_name.name].end
+                assert isinstance(result, casadi.SX)
+                return result
+            else:
+                leaves = [{'sym':e,'info':parse_variable_name(e.name())} for e in get_all_SX_leaves(sx_trajectory)]
+                assert len(list(set([e['info'].phase for e in leaves if e['info'].flag == 'T']))) == 1, 'Error, mixed phases'
+
+                if boundary_name == 'start':
+                    substitutions = [(e['sym'], self.start(e['sym'])) for e in leaves if e['info'].flag == 'T']
+                else:
+                    substitutions = [(e['sym'], self.end(e['sym'])) for e in leaves if e['info'].flag == 'T']
+
+                return casadi.substitute([sx_trajectory], [e[0] for e in substitutions], [e[1] for e in substitutions])[0]
 
     def set_derivative(self, x, dxdt_fn):
         if isinstance(dxdt_fn, float): dxdt_fn = casadi.SX(dxdt_fn)
