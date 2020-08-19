@@ -91,6 +91,7 @@ class MocpNlpSolver:
         initPenaltyWeight = kwargs.get('initPenaltyWeight', 100.0)
         beta = kwargs.get('beta', 0.1)
         penaltyWeightReductionSteps = kwargs.get('penaltyWeightReductionSteps', 5)
+        solveOriginalProblem = kwargs.get('solveOriginalProblem', True)
 
         # Solve the problem repeatedly while reducing the initial guess penalty
         status = [{'result': None}]
@@ -98,7 +99,8 @@ class MocpNlpSolver:
             status.append(self.solver_step(x_value, p_value, initPenaltyWeight, status[-1]['result']))
             initPenaltyWeight *= beta
 
-        # Final step without initial guess penalty, to solve the original problem
-        status.append(self.solver_step(x_value, p_value, 0.0, status[-1]['result']))
+        if solveOriginalProblem:
+            # Final step without initial guess penalty, to solve the original problem
+            status.append(self.solver_step(x_value, p_value, 0.0, status[-1]['result']))
 
         return status
