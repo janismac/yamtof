@@ -10,7 +10,7 @@ Its features include:
 * Tried and tested default solver configuration
 * Interpolation of the resulting states, inputs and additional outputs
 
-See [/yamtof/examples](yamtof/examples) for usage examples.
+See [/yamtof/examples](https://github.com/janismac/yamtof/tree/master/yamtof/examples) for usage examples.
 
 # Dependencies
 
