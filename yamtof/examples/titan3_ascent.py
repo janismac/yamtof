@@ -335,4 +335,6 @@ def generate_figures(t_grid, trajectories, p):
         ax.grid()
         fig.savefig('Titan3_' + trajectory_name + '.png', dpi=288)
 
-main()
+
+if __name__ == '__main__':
+    main()

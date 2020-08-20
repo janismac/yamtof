@@ -825,12 +825,13 @@ def generate_figures():
     plt.close('all')
 
 
-from time import time
+if __name__ == '__main__':
+    from time import time
 
-t_start = time()
-solve_RTLS_launch_problem()
-t_end = time()
-print('solve time:', f2s(t_end-t_start), 'sec')
+    t_start = time()
+    solve_RTLS_launch_problem()
+    t_end = time()
+    print('solve time:', f2s(t_end-t_start), 'sec')
 
-print('generating figures ...')
-generate_figures()
+    print('generating figures ...')
+    generate_figures()
