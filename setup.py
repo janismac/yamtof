@@ -1,9 +1,9 @@
-from distutils.core import setup
+from setuptools import setup
 setup(
     name = 'yamtof',
     version = '0.1',
     license = 'apache-2.0',
-    packages = ['yamtof'],
+    packages = ['yamtof', 'yamtof.examples'],
     description = 'Yamtof provides a simple and convenient interface for writing multi-phase optimal control problems.',
     author = 'Janis Maczijewski',
     author_email = 'Janis.Maczijewski@rwth-aachen.de',
