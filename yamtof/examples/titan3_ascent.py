@@ -11,7 +11,7 @@ import collections
 import casadi
 import math
 from casadi import pi
-from yamtof.mocp import MultiPhaseOptimalControlProblem
+from yamtof import MultiPhaseOptimalControlProblem
 
 def main():
     p = get_parameters()
@@ -89,8 +89,8 @@ def main():
         mocp.phases[phase_name].change_time_resolution(6)
     mocp.solve()
 
-    print('solution final time = ', sum([p.duration_value for p in mocp.phases.values()]) * p.scale.time)
-    print('expected final time =  924.139')
+    print('solution final time:', sum([p.duration_value for p in mocp.phases.values()]) * p.scale.time)
+    print('expected final time: 924.139')
 
     # Interpolate resulting tajectory
     tau_grid = casadi.linspace(0.0,1.0,501)

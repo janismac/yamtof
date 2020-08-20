@@ -1,9 +1,8 @@
-assert __name__ == '__main__'
 import collections
 import casadi
 import math
 from casadi import pi, sin, cos, DM
-from yamtof.mocp import MultiPhaseOptimalControlProblem as MOCP
+from yamtof import MOCP
 
 def solve_launch_direction_problem(p):
     # Find the approximate launch direction vector.
@@ -96,7 +95,7 @@ def solve_RTLS_launch_problem():
     add_phase_continuity_constraint(mocp, phase_ascent, phase_separation_S2, include_mass=False, include_heat=False)
 
     # S2 separation coast duration
-    separation_coast_time_S2 = 11.0 / p.scale.time # TODO move to parameters
+    separation_coast_time_S2 = 11.0 / p.scale.time
     mocp.add_constraint(phase_separation_S2.duration < separation_coast_time_S2)
     mocp.add_objective(-2.0 * phase_separation_S2.duration)
 
@@ -135,7 +134,7 @@ def solve_RTLS_launch_problem():
     add_phase_continuity_constraint(mocp, phase_ascent, phase_separation_S1, include_mass=False, include_heat=False)
 
     # S1 separation coast duration
-    separation_coast_time_S1 = 18.0 / p.scale.time # TODO move to parameters
+    separation_coast_time_S1 = 18.0 / p.scale.time
     mocp.add_constraint(phase_separation_S1.duration < separation_coast_time_S1)
     mocp.add_objective(-2.0 * phase_separation_S1.duration) # Force coast duration up to nominal value
 

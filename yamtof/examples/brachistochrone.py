@@ -1,8 +1,8 @@
-from yamtof.mocp import MultiPhaseOptimalControlProblem
+import yamtof
 from casadi import cos, sin, pi, sqrt, linspace, fabs, mmax, DM
 
 if __name__ == '__main__':
-    mocp = MultiPhaseOptimalControlProblem()
+    mocp = yamtof.MultiPhaseOptimalControlProblem()
     start = lambda a: mocp.start(a)
     end   = lambda a: mocp.end(a)
     phase_name = 'phaseA'

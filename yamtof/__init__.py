@@ -1,0 +1,2 @@
+from yamtof.mocp import MultiPhaseOptimalControlProblem
+from yamtof.mocp import MultiPhaseOptimalControlProblem as MOCP
