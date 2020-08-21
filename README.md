@@ -12,6 +12,17 @@ Its features include:
 
 See [/yamtof/examples](https://github.com/janismac/yamtof/tree/master/yamtof/examples) for usage examples.
 
+# Installation and Test
+
+In a command line with Python 3 installed, run:
+
+    mkdir tmp
+    cd tmp
+    pip install yamtof
+    python -m yamtof.examples.falcon9_rtls
+
+Afterwards, the working directory should contain figures from the example problem.
+
 # Dependencies
 
 * Python 3.7
