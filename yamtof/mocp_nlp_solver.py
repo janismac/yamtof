@@ -97,10 +97,12 @@ class MocpNlpSolver:
         status = [{'result': None}]
         for i in range(penaltyWeightReductionSteps):
             status.append(self.solver_step(x_value, p_value, initPenaltyWeight, status[-1]['result']))
+            x_value = status[-1]['result']['x']
             initPenaltyWeight *= beta
 
         if solveOriginalProblem:
             # Final step without initial guess penalty, to solve the original problem
             status.append(self.solver_step(x_value, p_value, 0.0, status[-1]['result']))
+            x_value = status[-1]['result']['x']
 
         return status
